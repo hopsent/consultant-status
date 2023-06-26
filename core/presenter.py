@@ -20,17 +20,17 @@ class Presenter:
         статусу объектов Account на целевом сайте.
         """
 
-        account_to_status = {
+        sort_account_to_status = {
             ST.NO_DATA: [],
             ST.BUSY: [],
             ST.NOT_BUSY: [],
         }
         for item in Drainer(q):
             if item.is_busy is None:
-                account_to_status[ST.NO_DATA].append(str(item))
+                sort_account_to_status[ST.NO_DATA].append(str(item))
             elif item.is_busy is True:
-                account_to_status[ST.BUSY].append(str(item))
+                sort_account_to_status[ST.BUSY].append(str(item))
             elif item.is_busy is False:
-                account_to_status[ST.NOT_BUSY].append(str(item))
-        
-        return account_to_status
+                sort_account_to_status[ST.NOT_BUSY].append(str(item))
+
+        return sort_account_to_status

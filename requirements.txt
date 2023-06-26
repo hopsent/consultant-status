@@ -2,3 +2,4 @@ selenium==4.7.2
 python-dotenv==0.21.0
 python-telegram-bot==13.7
 keyring==23.13.1
+flake8==5.0.4

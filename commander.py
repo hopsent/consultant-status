@@ -1,11 +1,9 @@
-import logging, time
+import logging
 from logging.handlers import RotatingFileHandler
 
 from core.presenter import Presenter
 from core.processing import MultiCheckHandler
 from core.status import Status
-
-from core.drivers import DriversHandler
 
 
 formater = logging.Formatter(
@@ -25,7 +23,19 @@ logger.addHandler(handler)
 
 class Commander:
     """
-    Интерфейс, объединяющий в одну функцию.
+    Интерфейс, объединяющий несколько программ для
+    использования в качестве команды в интерфейсе
+    телеграм-бота, в частности объединяются:
+    (1) хендлер, отвечающий за мультипоточность; -
+    на объекте хендлера вызывается метод processing(),
+    запускающий потоковую проверку статуса аккаунтов;
+    (2) презентер информации, полученной из очереди,
+    являющейся результатом работы метода processing().
+
+    Результат объединения - словарь с ключами, отвечающими
+    бизнес-логике: 'not_busy' - свободные аккаунты и
+    'no_data' - техническая информация на случай проблем с
+    работой программ.
     """
 
     def __init__(self, regional: bool) -> None:
@@ -39,13 +49,7 @@ class Commander:
 
         logger.info(presentation)
 
-        return ', '.join(presentation[Status.NOT_BUSY])
-
-drivers_handler = DriversHandler()
-drivers_handler.create_drivers()
-drivers = drivers_handler.drivers
-start = time.time()
-print(Commander(regional=False).perform_not_busy(drivers=drivers))
-print(time.time() - start)
-for driver in drivers:
-    driver.quit()
+        return {
+            Status.NOT_BUSY: ', '.join(presentation[Status.NOT_BUSY]),
+            Status.NO_DATA: ', '.join(presentation[Status.NO_DATA]),
+        }

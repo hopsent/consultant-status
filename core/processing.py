@@ -21,7 +21,7 @@ class MultiCheckHandler:
 
     Позволяет проверить сразу несколько Account на предмет
     текущего статуса на целевом сайте.
-    
+
     Параметры regional и amount - составная часть бизнес-логики.
     Инстанцируя объект данного класса, необходимо указать, в какую
     часть бизнес-логики встроен объект, то есть какую группу аккаунтов
@@ -47,7 +47,7 @@ class MultiCheckHandler:
         else:
             self.amount = self.GENERAL_AMOUNT
 
-    def create_accounts_data_list(self) -> List[Union[Credential, None]]:  # Property - _
+    def create_accounts_data_list(self) -> List[Union[Credential, None]]:
         """
         Получаем из хранилища keyring чувствительную информацию
         от аккаунтов на целевом сайте. Возвращаем список объектов
@@ -69,12 +69,15 @@ class MultiCheckHandler:
             pass
 
         # Предоставляем заранее сохраненные с использованием keyring данные.
-        return [get_credential(f'{prefix}{i}', None) for i in range(self.amount)]
+        return [
+            get_credential(f'{prefix}{i}', None) for i in range(self.amount)
+        ]
 
-    def create_and_check_account(self,
-                                account_data: SimpleCredential,
-                                driver: Firefox,
-                                q: Queue) -> None:
+    def create_and_check_account(
+            self,
+            account_data: SimpleCredential,
+            driver: Firefox,
+            q: Queue) -> None:
         """
         Из объектов SimpleCredential извлекаются логин и пароль
         и создаётся объект Account. На таком объекте Account
@@ -91,7 +94,7 @@ class MultiCheckHandler:
         account = Account(login=login, password=password)
         status = account.check_account_is_busy(driver)
         q.put_nowait(status)
-    
+
     def processing(self, drivers: list) -> Queue:
         """
         Разбивает исполнение программы на процессы, чтобы,

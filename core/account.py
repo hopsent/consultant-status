@@ -36,7 +36,6 @@ logger.setLevel(logging.NOTSET)
 logger.addHandler(handler)
 
 
-
 class Account:
     """
     Предназначен для управления информацией
@@ -45,17 +44,12 @@ class Account:
     Аккаунт состоит из параметров логина login,
     пароля password и состояния активности на сайте
     is_busy. Последний параметр вычисляется методом
-    check_account_is_busy() и по умолчанию - None, чтобы
-    не вызывать фрустрации у пользователя в случае прерывания
-    вычисления параметра.
+    check_account_is_busy() и по умолчанию - None.
 
     Указанный метод является основным и использует данные
-    об элементах в ответе HTTP-response, перечисленных в
-    модуле pagesdata при эмуляции инстансом Firefox
+    об элементах веб-страницы в HTTP-response, перечисленных
+    в модуле pagesdata при эмуляции браузером Firefox
     поведения человека на заданном сайте.
-
-    Предусмотрены константы для строкового представления
-    инстанса Account.
     """
 
     URL = getenv('URL', default=PD.DEFAULT_URL)
@@ -81,22 +75,37 @@ class Account:
         login = self.login
         password = self.password
         URL = self.URL
-        message = f'Аккаунт {login}. Драйвер: {str(driver)}.\n'  # Типовое инфо.
+        # Общая информация.
+        message = f'Аккаунт {login}.\n'
 
         # Проверки корректного нахождения на целевом URL.
         if driver.current_url == PD.DEFAULT_URL:
-            message_er_url = (message + 'При выполнении метода'
-                ' check_account_is_busy драйвер находится на дефолтном URL.'
-                ' Вероятно, проблема с .env.'
-                f' Текущий URL: {driver.current_url}')
+            message_er_url = (
+                message + 'При выполнении метода check_account_is_busy драйвер'
+                'находился на дефолтном URL.'
+            )
+            driver.get(getenv('URL', default=PD.DEFAULT_URL_CHECKER))
+            if URL[-14:-4] not in driver.current_url:
+                message_er_url += (
+                    'Проблема не решена. Вероятно, проблема с .env.'
+                    f' Текущий URL: {driver.current_url}'
+                )
+                logger.error(message_er_url, exc_info=True)
+                return self
+            message_er_url += f' Решено. Текущий URL: {driver.current_url}'
             logger.error(message_er_url, exc_info=True)
-            return self
+
         if not driver.current_url == URL:
-            message_er_url = (message + 'При выполнении метода'
-                ' check_account_is_busy достичь целевого URL не удалось.'
-                f' Текущий URL: {driver.current_url}')
-            logger.error(message_er_url, exc_info=True)
-            return self
+            if URL[-14:-4] not in driver.current_url:
+                message_er_url = (
+                    message + 'При выполнении метода'
+                    ' check_account_is_busy достичь целевого URL не удалось.'
+                    f' Текущий URL: {driver.current_url}'
+                )
+                logger.error(message_er_url, exc_info=True)
+                return self
+            driver.get(PD.DEFAULT_URL)
+            driver.get(URL)
 
         try:  # Логинимся.
             driver.find_element(
@@ -126,7 +135,7 @@ class Account:
                 )
                 driver.find_element(value=PD.BUTTONS['sign_in']).click()
                 msg_srv_er = message + 'Ошибка авторизации 502 обработана.'
-                logger.info(msg_srv_er)
+                logger.error(msg_srv_er, er, exc_info=True)
             except NoSuchElementException as er:
                 # Проверяем, если неверно введены логин или пароль.
                 message_login_er = 'Неопределенная ошибка'
@@ -148,12 +157,16 @@ class Account:
         # нажимаем на кнопку Esc, когда он появится.
         welcome_button = By.CSS_SELECTOR, PD.BUTTONS['welcome_button']
         wait = WebDriverWait(driver, 5)
-        wait.until(EC.visibility_of_element_located(welcome_button))
-        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        try:
+            wait.until(EC.visibility_of_element_located(welcome_button))
+        except TimeoutException as er:
+            msg_wlc_er = message + 'Не подгрузилась кнопка приветствия'
+            logger.info(msg_wlc_er, er, exc_info=True)
+        finally:
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
 
         # Управляем ответом на действия сервера в случае
         # обнаружением неверного профиля.
-        flag_wrong_profile = False
         change_profile_button = (
             By.CSS_SELECTOR,
             PD.BUTTONS['change_profile_not_now']
@@ -162,10 +175,11 @@ class Account:
             By.CSS_SELECTOR,
             PD.PROFILE_STATUS['info']
         ).text != PD.PROFILE_STATUS['default_status']:
-            flag_wrong_profile = True
             logger.info(message + 'Обнаружен неверный профиль.'
                         ' Ищем поп-ап с предложением сменить профиль.')
-            change_profile_buttons = driver.find_elements(*change_profile_button)
+            change_profile_buttons = driver.find_elements(
+                *change_profile_button
+            )
             if len(change_profile_buttons) != 0:
                 logger.info(message + 'Кнопка смены профиля найдена.')
                 change_profile_buttons[0].click()
@@ -185,7 +199,9 @@ class Account:
         except ElementClickInterceptedException as er:
             ActionChains(driver).send_keys(Keys.ESCAPE).perform()
             driver.find_element(*search_css).click()
-            message_acc_profile = message + 'Нажатию на "Поиск" помешал попап.'
+            message_acc_profile = (
+                message + 'Нажатию на "Поиск" помешал попап. Решено.'
+            )
             logger.info(message_acc_profile, er, exc_info=True)
         except NoSuchElementException as er:
             logger.error(message, er, exc_info=True)
@@ -198,7 +214,7 @@ class Account:
         # Ищем элементы, отображающиеся на странице поиска либо на
         # главной странице, когда нажатие на "Поиск" приводит
         # к поп-апу - аккаунт занят. Вебдрайвер ждет,
-        # пока один из двух уникальных элементов не обнаружится. 
+        # пока один из двух уникальных элементов не обнаружится.
         start_page_element = EC.presence_of_element_located(
             (By.CSS_SELECTOR, PD.BUTTONS['account_busy_leave'])
         )
@@ -213,40 +229,21 @@ class Account:
         # значением уникального элемента стартовой страницы и уникального
         # элемента страницы поиска по первым трём буквам.
         if actual_element.text[:2] == PD.TEXT_TITLES['start_page'][:2]:
-            # Повторная проверка на поп-ап смены профиля.
-            if flag_wrong_profile:
-                change_profile_buttons = driver.find_elements(*change_profile_button)
-                if len(change_profile_buttons) != 0:
-                    logger.info(message + 'Кнопка смены профиля найдена.')
-                    change_profile_buttons[0].click()
-            actual_element.click()
             self.is_busy = True
-        elif actual_element.text[:2] == PD.TEXT_TITLES['search_page'][:2]:
-            # Подстраховка с проверкой поп-апа смены профиля.
-            if flag_wrong_profile:
-                change_profile_buttons = driver.find_elements(*change_profile_button)
-                if len(change_profile_buttons) != 0:
-                    logger.info(message + 'Кнопка смены профиля найдена.')
-                    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-                    change_profile_buttons[0].click()
-                    ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-                ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-            driver.find_element(value=PD.BUTTONS['logout']).click()
-            driver.find_element(
-                by=By.CSS_SELECTOR,
-                value=PD.BUTTONS['confirm_logout']
-            ).click()
+        if actual_element.text[:2] == PD.TEXT_TITLES['search_page'][:2]:
             self.is_busy = False
 
-        # Если по каким-то причинам драйвер не выполнил весь код выше
-        # возвращаем на стартовую страницу.
-        if not EC.url_matches(URL):
-            driver.get(URL)
-        
-        message += f'{self} занят? {self.is_busy}'
-        logger.info(message)
-        
+        # Тактика выхода одинаковая для любого статуса аккаунта:
+        # нажимаем на Esc, чтобы закрыть любые всплывшие окна,
+        # нажимаем на кнопку выхода и нажимаем на всплывшую
+        # кнопку подтверждения выхода.
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        driver.find_element(value=PD.BUTTONS['logout']).click()
+        driver.find_element(
+            by=By.CSS_SELECTOR,
+            value=PD.BUTTONS['confirm_logout']
+        ).click()
+
         return self
 
     def __str__(self) -> str:

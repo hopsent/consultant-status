@@ -19,14 +19,14 @@ class DriversHandler:
     заранее.
     """
 
-    EXEC_PATH: str = getenv('EXEC_PATH', default='..')
+    EXEC_PATH: str = getenv('EXEC_PATH', default='geckodriver/')
     URL: str = getenv('URL', default=PD.DEFAULT_URL)
     LOG_PATH: str = 'logs/geckodriver.log'
     REGIONAL_AMOUNT: int = int(getenv('REGIONAL_AMOUNT', default=0))
     GENERAL_AMOUNT: int = int(getenv('GENERAL_AMOUNT', default=0))
-    TOTAL_AMOUNT: int =  9 # max(REGIONAL_AMOUNT, GENERAL_AMOUNT)
+    TOTAL_AMOUNT: int = max(REGIONAL_AMOUNT, GENERAL_AMOUNT)
 
-    def __init__(self, drivers = []) -> None:
+    def __init__(self, drivers=[]) -> None:
         self.drivers = drivers
 
     def create_drivers(self) -> None:

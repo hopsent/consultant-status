@@ -7,6 +7,7 @@ class PagesData:
     """
 
     DEFAULT_URL: str = 'https://www.google.com/'
+    DEFAULT_URL_CHECKER: str = 'https://www.wikipedia.org/'
 
     FORM_FIELDS: dict = {
         'login': 'loginform-login',
@@ -22,14 +23,14 @@ class PagesData:
         'search': '.mainToolbar > a:nth-child(5) > button:nth-child(1)',
         'logout': 'logout',
         'confirm_logout': 'button.x-button:nth-child(1)',
-        'account_busy_leave': 'div.popupContent:nth-child(3) > div:nth-child(2) > button:nth-child(2)',
+        'account_busy_leave': 'div.popupContent:nth-child(3) > div:nth-child(2) > button:nth-child(2)', # noqa
     }
 
     POPUP: dict = {
         'auth_error_popup': 'asyncLoginModalError',  # Не используется сейчас.
         'welcome_popup': '.popupOverlay',
     }
-    
+
     PROFILE_STATUS: dict = {
         'info': '.link > span:nth-child(1)',
         'default_status': 'Юрист',
