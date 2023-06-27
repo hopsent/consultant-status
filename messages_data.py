@@ -9,13 +9,13 @@ class MessagesData:
     }
 
     BEGINNINGS = {
-        'normal': 'Попробуй эти',
+        'normal': 'Попробуй эти аккаунты ',
         'trouble': 'Проблемы с аккаунтами: '
     }
 
     ACCOUNT_TYPES = {
-        'general': 'общие: ',
-        'regional': 'региональные: ',
+        'general': 'общего назначения: ',
+        'regional': 'с региональным контентом: ',
     }
 
     DEFAULT_CHAT = 000000000
