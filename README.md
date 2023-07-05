@@ -7,7 +7,32 @@ python 3.8.10
 selenium 4.7.2
 geckodriver
 python-telegram-bot 13.7 (поллинг; версия 2.0 будет на вебхуках)
-# установка
+# запуск
+```
+Запуск контейнера докер
+```
+sudo docker run --name consultant-status -it -p 8000:8000 -d --privileged hopsent/consultant-status:v1.07.2023
+```
+После запуска контейнера
+```
+sudo docker exec -ti consultant-status /bin/sh
+dbus-run-session -- sh
+echo 'somecredstorepass' | gnome-keyring-daemon --unlock
+```
+НЕ ВЫХОДЯ ИЗ DBUS
+```
+python3
+import keyring as k
+k.set_password()
+```
+Комментарий
+```
+наполняем хранилище данными: сервисное имя (prefix), логин и пароль
+```
+Запуск программы
+```
+ctrl-d (выход из шелла пайтона в терминал dbus)
+python3 __main__.py
 # хранение данных
 Приложение использует чувствительные данные: логин и пароли для авторизации
 на целевом сайте.
