@@ -119,6 +119,10 @@ class Account:
             logger.error(message, er, exc_info=True)
             driver.get(URL)
             return self
+        except ElementClickInterceptedException as er:
+            logger.error(message, er, exc_info=True)
+            driver.get(URL)
+            return self
 
         # В результате логина изменяется URL. Ожидаем.
         wait = WebDriverWait(driver, 5)
