@@ -19,7 +19,7 @@ class DriversHandler:
     заранее.
     """
 
-    EXEC_PATH: str = getenv('EXEC_PATH', default='geckodriver/')
+    EXEC_PATH: str = getenv('EXEC_PATH', default='geckodriver')
     URL: str = getenv('URL', default=PD.DEFAULT_URL)
     LOG_PATH: str = 'logs/geckodriver.log'
     REGIONAL_AMOUNT: int = int(getenv('REGIONAL_AMOUNT', default=0))
@@ -38,11 +38,10 @@ class DriversHandler:
         и возвращается список драйверов.
         """
 
-        if self.TOTAL_AMOUNT == 0 or self.EXEC_PATH == '..':
+        if self.TOTAL_AMOUNT == 0:
             raise ENVFileException(
                 'При создании списка драйверов обнаружены дефолтные значения'
-                f'переменных: количество аккаунтов - {self.TOTAL_AMOUNT},'
-                f'путь до гецкодрайвера: {self.EXEC_PATH}.'
+                f'переменных: количество аккаунтов - {self.TOTAL_AMOUNT}.'
             )
 
         for _ in range(self.TOTAL_AMOUNT):

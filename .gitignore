@@ -12,6 +12,7 @@ logs/
 
 # Driver
 geckodriver/
+geckodriver
 
 # Cache
 __pycache__
