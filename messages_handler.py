@@ -86,9 +86,9 @@ def general_account_check(update, context):
     """
     chat = update.effective_chat
     if not chat_validation(chat):
-        send_access_restricted_message(context, chat)
+        return send_access_restricted_message(context, chat)
     else:
-        check_status_send_message(chat, context, regional=False)
+        return check_status_send_message(chat, context, regional=False)
 
 
 def regional_account_check(update, context):
@@ -99,6 +99,6 @@ def regional_account_check(update, context):
     """
     chat = update.effective_chat
     if not chat_validation(chat):
-        send_access_restricted_message(context, chat)
+        return send_access_restricted_message(context, chat)
     else:
-        check_status_send_message(chat, context, regional=True)
+        return check_status_send_message(chat, context, regional=True)

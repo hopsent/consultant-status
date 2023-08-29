@@ -20,7 +20,12 @@ logger_main = logging.basicConfig(
     handlers=[handler, ],
 )
 
-secret_token = getenv('TOKEN', default='')
+secret_token = getenv('TOKEN', default='0')
+port = getenv('PORT', default='8443')
+ip = getenv('SERVER_ADDRESS', default='0.0.0.0')
+cert = getenv('CERT_PATH', default='./cert')
+key = getenv('KEY_PATH', default='./key')
+listen = getenv('LISTEN', default='0.0.0.0')
 
 
 def main():
@@ -28,7 +33,14 @@ def main():
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler('general', general_account_check))
     dispatcher.add_handler(CommandHandler('regional', regional_account_check))
-    updater.start_polling()
+    updater.start_webhook(
+        listen=listen,
+        port=int(port),
+        url_path=secret_token,
+        webhook_url='https://' + ip + ':' + port + '/' + secret_token,
+        cert=cert,
+        key=key,
+    )
     updater.idle()
 
 

@@ -19,6 +19,7 @@ class PagesData:
         'sign_in': 'buttonLogin',
         'retry_button': '.modal__body > p:nth-child(4) > a:nth-child(1)',
         'welcome_button': 'button.x-button:nth-child(1)',
+        # Не используется сейчас.
         'change_profile_not_now': '.popupButtons > button:nth-child(2)',
         'search': '.mainToolbar > a:nth-child(5) > button:nth-child(1)',
         'logout': 'logout',
