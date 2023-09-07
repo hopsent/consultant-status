@@ -1,7 +1,7 @@
 from os import getenv
 
 from dotenv import load_dotenv
-from selenium import webdriver
+from selenium.webdriver import Firefox
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 
@@ -52,6 +52,6 @@ class DriversHandler:
                 executable_path=self.EXEC_PATH,
                 log_path=self.LOG_PATH
             )
-            driver = webdriver.Firefox(service=service, options=options)
+            driver = Firefox(service=service, options=options)
             driver.get(self.URL)
             self.drivers.append(driver)

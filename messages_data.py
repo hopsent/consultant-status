@@ -10,7 +10,8 @@ class MessagesData:
 
     BEGINNINGS = {
         'normal': 'Попробуй эти аккаунты ',
-        'trouble': 'Проблемы с аккаунтами: '
+        'trouble': 'Проблемы с аккаунтами: ',
+        'lost_data': 'Есть потерянные аккаунты! Проверены: '
     }
 
     ACCOUNT_TYPES = {

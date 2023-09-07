@@ -63,10 +63,18 @@ def check_status_send_message(chat, context, regional):
         chat_id=chat.id,
         text=f'{MD.BEGINNINGS["normal"]}{acc_type}{busy_msg_chunk(accounts)}'
     )
-    if accounts[Status.NO_DATA]:  # Если есть необработанные аккаунты.
+    # Если есть необработанные аккаунты.
+    if accounts[Status.NO_DATA]:
         context.bot.send_message(
             chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
             text=f'{MD.BEGINNINGS["trouble"]}{accounts[Status.NO_DATA]}'
+        )
+    if 'lost_data' in accounts.keys():
+        context.bot.send_message(
+            chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
+            text=f'{MD.BEGINNINGS["lost_data"]}'
+                 f'{accounts[Status.NO_DATA]} {accounts[Status.NOT_BUSY]} '
+                 f'{accounts[Status.BUSY]}'
         )
 
 
@@ -95,7 +103,7 @@ def regional_account_check(update, context):
     """
     Действия бота в случае написания в чате команды /regional.
     Если чат не валидный, сообщаем, что доступ запрещен.
-    В противном случае сообщаем статус запрощенных аккаунтов.
+    В противном случае сообщаем статус запрошенных аккаунтов.
     """
     chat = update.effective_chat
     if not chat_validation(chat):

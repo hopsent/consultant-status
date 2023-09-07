@@ -7,16 +7,16 @@ class PagesData:
     """
 
     DEFAULT_URL: str = 'https://www.google.com/'
-    DEFAULT_URL_CHECKER: str = 'https://www.wikipedia.org/'
 
     FORM_FIELDS: dict = {
-        'login': 'loginform-login',
-        'password': 'loginform-password',
+        'login': 'loginform-login',  # ID.
+        'password': 'loginform-password',  # ID.
         'error': '.form__error',  # CSS-селектор
     }
 
     BUTTONS: dict = {
-        'sign_in': 'buttonLogin',
+        'sign_in': 'buttonLogin',  # ID.
+        'login_error': 'asyncLoginModalError\\',  # ID.
         'retry_button': '.modal__body > p:nth-child(4) > a:nth-child(1)',
         'welcome_button': 'button.x-button:nth-child(1)',
         # Не используется сейчас.

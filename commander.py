@@ -46,10 +46,21 @@ class Commander:
         handler = MultiCheckHandler(regional=self.regional)
         q = handler.processing(drivers=drivers)
         presentation = Presenter().composing(q)
+        result = {
+            Status.NOT_BUSY: ', '.join(presentation[Status.NOT_BUSY]),
+            Status.NO_DATA: ', '.join(presentation[Status.NO_DATA]),
+            Status.BUSY: ', '.join(presentation[Status.BUSY]),
+        }
+
+        # Проверяем, нет ли не выполнивших скрипт полностью драйверов.
+        accounts_checked = []
+        for key in presentation.keys():
+            for i in presentation[key]:
+                accounts_checked.append(i)
+        if len(accounts_checked) != handler.amount:
+            result['lost_data'] = ''
+            logger.info('Аккаунты потеряны.')
 
         logger.info(presentation)
 
-        return {
-            Status.NOT_BUSY: ', '.join(presentation[Status.NOT_BUSY]),
-            Status.NO_DATA: ', '.join(presentation[Status.NO_DATA]),
-        }
+        return result
