@@ -1,11 +1,13 @@
 from os import getenv
+from datetime import datetime
 
 from dotenv import load_dotenv
 
-from commander import Commander
+from core.commander import Commander
 from core.drivers import DriversHandler
 from core.status import Status
-from messages_data import MessagesData as MD
+from messanger.container import PreviuosMessageContainer
+from messanger.messages_data import MessagesData as MD
 
 
 load_dotenv()
@@ -17,10 +19,23 @@ drivers_handler = DriversHandler()
 drivers_handler.create_drivers()
 drivers = drivers_handler.drivers
 
+# Создаем объект для хранения времени предыдущего сообщения.
+previous_message = PreviuosMessageContainer()
+
 # Подгружаем информацию о референтных значениях чат-айди из .env,
 # используем их для валидации пользователей и контроля за исполнением кода.
 trouble_handle_id = int(getenv('TROUBLE_CHAT_ID', default=MD.DEFAULT_CHAT))
 valid_chat_id = int(getenv('VALID_CHAT_ID', default=MD.DEFAULT_CHAT))
+
+
+def send_reduce_frequency(context, chat):
+    """
+    Сообщаем, что нужно увеличить интервал отправки команд боту.
+    """
+    context.bot.send_message(
+        chat_id=chat.id,
+        text=f'{MD.COMMON["reduce_frequency"]}'
+    )
 
 
 def send_access_restricted_message(context, chat):
@@ -83,7 +98,31 @@ def chat_validation(chat):
     Валидируем чат, где будет работать бот, на соответствие
     референтному чату из .env-файла.
     """
-    return chat.id == valid_chat_id
+    return chat.id == valid_chat_id or chat.id == trouble_handle_id
+
+
+def date_validation(date: datetime):
+    """
+    Запрещаем отправку команд со скоростью < одной команды
+    раз в 15 секунд. Время приведено в Unix timestamp.
+    """
+    delta = date - previous_message.date
+    if delta.total_seconds() > 15:
+        previous_message.date = date
+        return True
+    return False
+
+
+def common_account_check(update, context, regional):
+    date = update.message['date']
+    chat = update.effective_chat
+    if not chat_validation(chat):
+        return send_access_restricted_message(context, chat)
+    if not date_validation(date):
+        return send_reduce_frequency(context, chat)
+
+    else:
+        return check_status_send_message(chat, context, regional=regional)
 
 
 def general_account_check(update, context):
@@ -92,11 +131,7 @@ def general_account_check(update, context):
     Если чат не валидный, сообщаем, что доступ запрещен.
     В противном случае сообщаем статус запрошенных аккаунтов.
     """
-    chat = update.effective_chat
-    if not chat_validation(chat):
-        return send_access_restricted_message(context, chat)
-    else:
-        return check_status_send_message(chat, context, regional=False)
+    return common_account_check(update, context, regional=False)
 
 
 def regional_account_check(update, context):
@@ -105,8 +140,4 @@ def regional_account_check(update, context):
     Если чат не валидный, сообщаем, что доступ запрещен.
     В противном случае сообщаем статус запрошенных аккаунтов.
     """
-    chat = update.effective_chat
-    if not chat_validation(chat):
-        return send_access_restricted_message(context, chat)
-    else:
-        return check_status_send_message(chat, context, regional=True)
+    return common_account_check(update, context, regional=True)

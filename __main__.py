@@ -5,7 +5,7 @@ from os import getenv
 from dotenv import load_dotenv
 from telegram.ext import CommandHandler, Updater
 
-from messages_handler import general_account_check, regional_account_check
+from messanger.messages_handler import general_account_check, regional_account_check
 
 
 load_dotenv()
@@ -15,7 +15,7 @@ handler = RotatingFileHandler(
     maxBytes=52428800,
 )
 logger_main = logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format='%(asctime)s, %(levelname)s, %(process)d, %(message)s, %(name)s',
     handlers=[handler, ],
 )
@@ -38,8 +38,8 @@ def main():
         port=int(port),
         url_path=secret_token,
         webhook_url='https://' + ip + ':' + port + '/' + secret_token,
-        cert=cert,
-        key=key,
+#        cert=cert,
+#        key=key,
     )
     updater.idle()
 

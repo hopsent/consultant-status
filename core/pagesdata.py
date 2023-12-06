@@ -11,30 +11,16 @@ class PagesData:
     FORM_FIELDS: dict = {
         'login': 'loginform-login',  # ID.
         'password': 'loginform-password',  # ID.
-        'error': '.form__error',  # CSS-селектор
     }
 
     BUTTONS: dict = {
         'sign_in': 'buttonLogin',  # ID.
-        'login_error': 'asyncLoginModalError\\',  # ID.
-        'retry_button': '.modal__body > p:nth-child(4) > a:nth-child(1)',
-        'welcome_button': 'button.x-button:nth-child(1)',
-        # Не используется сейчас.
-        'change_profile_not_now': '.popupButtons > button:nth-child(2)',
-        'search': '.mainToolbar > a:nth-child(5) > button:nth-child(1)',
-        'logout': 'logout',
-        'confirm_logout': 'button.x-button:nth-child(1)',
-        'account_busy_leave': 'div.popupContent:nth-child(3) > div:nth-child(2) > button:nth-child(2)', # noqa
-    }
-
-    POPUP: dict = {
-        'auth_error_popup': 'asyncLoginModalError',  # Не используется сейчас.
-        'welcome_popup': '.popupOverlay',
-    }
-
-    PROFILE_STATUS: dict = {
-        'info': '.link > span:nth-child(1)',
-        'default_status': 'Юрист',
+        'search': '.x-main-toolbar__left-buttons > a:nth-child(2)',  # CSS
+        'logout': 'div.x-main-toolbar-top__button:nth-child(7)',  # CSS
+        'welcome_button': 'button.x-button:nth-child(1)',  # CSS
+        'account_busy_leave': '.popupButtons > button:nth-child(2)',
+        'account_info_button': 'div.x-main-toolbar-top__button:nth-child(6)',
+        'change_personality': 'tr.x-menu__content-row:nth-child(6) > td:nth-child(2) > div:nth-child(1)',  # noqa
     }
 
     TEXT_TITLES: dict = {
@@ -43,5 +29,5 @@ class PagesData:
     }
 
     LABEL: dict = {
-        'search': '.label > span:nth-child(1)',
+        'search': '.x-page-search-plus-panel__title-text',
     }
