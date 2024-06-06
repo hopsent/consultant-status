@@ -74,23 +74,24 @@ def check_status_send_message(chat, context, regional):
         acc_type = MD.ACCOUNT_TYPES["regional"]
     else:
         acc_type = MD.ACCOUNT_TYPES["general"]
-    context.bot.send_message(
-        chat_id=chat.id,
-        text=f'{MD.BEGINNINGS["normal"]}{acc_type}{busy_msg_chunk(accounts)}'
-    )
+    if 'lost_data' in accounts.keys():
+        context.bot.send_message(
+            chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
+            text=f'{MD.BEGINNINGS["lost_data"]}'
+                 f'{accounts[Status.NO_DATA]}, {accounts[Status.NOT_BUSY]}, '
+                 f'{accounts[Status.BUSY]}'
+        )
     # Если есть необработанные аккаунты.
     if accounts[Status.NO_DATA]:
         context.bot.send_message(
             chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
             text=f'{MD.BEGINNINGS["trouble"]}{accounts[Status.NO_DATA]}'
         )
-    if 'lost_data' in accounts.keys():
-        context.bot.send_message(
-            chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
-            text=f'{MD.BEGINNINGS["lost_data"]}'
-                 f'{accounts[Status.NO_DATA]} {accounts[Status.NOT_BUSY]} '
-                 f'{accounts[Status.BUSY]}'
-        )
+    if len(accounts[Status.BUSY]) + len(accounts[Status.NOT_BUSY]) == 0:
+        msg = MD.COMMON["wipe"]
+    else:
+        msg = f'{MD.BEGINNINGS["normal"]}{acc_type}{busy_msg_chunk(accounts)}'
+    return context.bot.send_message(chat_id=chat.id, text=msg)
 
 
 def chat_validation(chat):
