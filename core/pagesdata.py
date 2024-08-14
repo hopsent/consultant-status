@@ -6,7 +6,7 @@ class PagesData:
     и попапа, которые используются драйвером на сайте.
     """
 
-    DEFAULT_URL: str = 'https://www.google.com/'
+    DEFAULT_URL: str = 'https://www.john-doe.neocities.org/'
 
     FORM_FIELDS: dict = {
         'login': 'loginform-login',  # ID.
