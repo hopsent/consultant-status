@@ -75,11 +75,13 @@ class Account:
         button_sign_in = By.ID, PD.BUTTONS['sign_in']
 
         try:  # Заполняем форму логина.
-            wait.until(EC.element_to_be_clickable(button_sign_in))
+            wait.until(EC.element_to_be_clickable(password_field))
+            wait.until(EC.element_to_be_clickable(login_field))
             driver.find_element(*login_field).clear()
             driver.find_element(*password_field).clear()
             driver.find_element(*login_field).send_keys(self.login)
             driver.find_element(*password_field).send_keys(self.password)
+            wait.until(EC.element_to_be_clickable(button_sign_in))
             driver.find_element(*button_sign_in).click()
         except Exception:
             logger.error(message, exc_info=True)
@@ -133,6 +135,7 @@ class Account:
             else:
                 logger.error(message, exc_info=True)
                 driver.get(PD.DEFAULT_URL)
+                driver.get(URL)
                 return self
 
         # Логинимся.
@@ -144,6 +147,7 @@ class Account:
         except Exception:
             logger.error(message, exc_info=True)
             driver.get(PD.DEFAULT_URL)
+            driver.get(URL)
             return self
 
         # Справляемся с приветственным поп-ап: ждем поп-ап,
@@ -178,10 +182,12 @@ class Account:
             except Exception:
                 logger.error(message, exc_info=True)
                 driver.get(PD.DEFAULT_URL)
+                driver.get(URL)
                 return self
         except Exception:
             logger.error(message, exc_info=True)
             driver.get(PD.DEFAULT_URL)
+            driver.get(URL)
             return self
 
         # Ищем элементы, отображающиеся на странице поиска либо на
@@ -210,6 +216,7 @@ class Account:
         except Exception:
             logger.error(message, exc_info=True)
             driver.get(PD.DEFAULT_URL)
+            driver.get(URL)
             return self
 
         # Тактика выхода одинаковая для любого статуса аккаунта:
@@ -226,10 +233,12 @@ class Account:
             except Exception:
                 logger.error(message, exc_info=True)
                 driver.get(PD.DEFAULT_URL)
+                driver.get(URL)
                 return self
         except Exception:
             logger.error(message, exc_info=True)
             driver.get(PD.DEFAULT_URL)
+            driver.get(URL)
             return self
 
         return self
