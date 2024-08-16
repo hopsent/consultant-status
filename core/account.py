@@ -85,6 +85,7 @@ class Account:
             driver.find_element(*button_sign_in).click()
         except Exception:
             logger.error(message, exc_info=True)
+            driver.get(self.URL)
             return self
 
     def leave_account(self, driver: Firefox, wait: WebDriverWait) -> None:
