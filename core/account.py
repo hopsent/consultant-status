@@ -5,24 +5,18 @@ from typing import Optional
 from time import sleep
 
 from dotenv import load_dotenv
-from selenium.common.exceptions import (TimeoutException,
-                                        ElementClickInterceptedException)
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webelement import WebElement
 
 from core.pagesdata import PagesData as PD
 
 
 load_dotenv()
-
-secret_token = getenv('TOKEN', default='0')
-port = getenv('PORT', default='8443')
-ip = getenv('SERVER_ADDRESS', default='0.0.0.0')
-
 
 formater = logging.Formatter(
     '%(asctime)s, %(levelname)s, %(process)d, %(message)s, %(name)s'
@@ -50,8 +44,7 @@ class Account:
     check_account_is_busy() и по умолчанию - None.
 
     Указанный метод является основным и использует данные
-    об элементах веб-страницы в HTTP-response, перечисленных
-    в модуле pagesdata при эмуляции браузером Firefox
+    об элементах веб-страницы при эмуляции браузером Firefox
     поведения человека на заданном сайте.
     """
 
@@ -67,181 +60,121 @@ class Account:
         self.password = password
         self.is_busy = is_busy
 
-    def login_to_site(self, driver: Firefox, wait: WebDriverWait) -> object:
-
-        message = f'Аккаунт {self.login}. URL {driver.current_url}\n'
-        login_field = By.ID, PD.FORM_FIELDS['login']
-        password_field = By.ID, PD.FORM_FIELDS['password']
-        button_sign_in = By.ID, PD.BUTTONS['sign_in']
-
-        try:  # Заполняем форму логина.
-            wait.until(EC.element_to_be_clickable(password_field))
-            wait.until(EC.element_to_be_clickable(login_field))
-            driver.find_element(*login_field).clear()
-            driver.find_element(*password_field).clear()
-            driver.find_element(*login_field).send_keys(self.login)
-            driver.find_element(*password_field).send_keys(self.password)
-            wait.until(EC.element_to_be_clickable(button_sign_in))
-            driver.find_element(*button_sign_in).click()
-        except Exception:
-            logger.error(message, exc_info=True)
-            driver.get(self.URL)
-            return self
-
-    def leave_account(self, driver: Firefox, wait: WebDriverWait) -> None:
+    def leave_account(self, driver: Firefox, wait: WebDriverWait, msg: str) -> object:
         """
         Общий алгоритм выхода из аккаунта: нажимаются две отведенные для
         этого на сайте кнопки. Esc добавлена для исключения поп-апа.
         """
+
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-        wait.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, PD.BUTTONS['account_info_button']))
-        ).click()
-        wait.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, PD.BUTTONS['change_personality']))
-        ).click()
+        try:
+            wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, PD.BUTTONS['straight_exit']))
+            ).click()
+            wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, PD.BUTTONS['account_info_button']))
+            ).click()
+            wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, PD.BUTTONS['change_personality']))
+            ).click()
+        except Exception:
+            logger.error(msg, exc_info=True)
+            driver.get(PD.DEFAULT_URL)
+            return self
+
+    def emptyfier(self, field: WebElement) -> None:
+        """
+        Чистим формы на стартовой странице.
+        """
+
+        if len(field.text) != 0:
+            field.click()
+            field.send_keys(Keys.CONTROL + 'a')
+            field.send_keys(Keys.DELETE)
+
+    def login_to_site(self, wait: WebDriverWait) -> None:
+        """
+        Логинимся.
+        """
+
+        login_field = By.CSS_SELECTOR, PD.FORM_FIELDS['login']
+        password_field = By.CSS_SELECTOR, PD.FORM_FIELDS['password']
+        button_sign_in = By.CSS_SELECTOR, PD.BUTTONS['sign_in']
+
+        password_field = wait.until(EC.element_to_be_clickable(password_field))
+        self.emptyfier(password_field)
+        password_field.send_keys(self.password)
+        login_field = wait.until(EC.element_to_be_clickable(login_field))
+        self.emptyfier(login_field)
+        login_field.send_keys(self.login)
+        wait.until(EC.element_to_be_clickable(button_sign_in)).click()
+
+    def push_search_button(self, driver: Firefox, wait: WebDriverWait) -> None:
+        """
+        Нажимаем на кнопку "Быстрый поиск", пробуя, тем самым, пройти на экран,
+        который доступен, только если аккаунт не занят.
+        Нажатие на Esc уменьшает риск незапланированного поп-апа.
+        """
+
+        if self.login[-2:] in '14' or self.login[-2:] in '15':
+            welcome_button = By.CSS_SELECTOR, PD.BUTTONS['welcome_button']
+            try:
+                wait.until(EC.visibility_of_element_located(welcome_button))
+            except Exception:
+                message = self.login + '. Не подгрузилась кнопка приветствия'
+                logger.info(message, exc_info=True)
+            finally:
+                ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        else:
+            sleep(3)
+        search_css = By.CSS_SELECTOR, PD.BUTTONS['search']
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(EC.element_to_be_clickable(search_css)).click()
+
+    def check_availability(self, wait: WebDriverWait) -> None:
+        """
+        Определяем текст уникальных элементов и сравниваем с референтным
+        значением уникального элемента стартовой страницы и уникального
+        элемента страницы поиска
+        """
+
+        busy_element = EC.presence_of_element_located(
+            (By.XPATH, f'//p[text()="{PD.TEXT_TITLES["start_page"]}"]')
+        )
+        spare_element = EC.presence_of_element_located(
+            (By.XPATH, f'//b[text()="{PD.TEXT_TITLES["search_page"]}"]')
+        )
+        actual_element = wait.until(EC.any_of(busy_element, spare_element))
+        if actual_element.text == PD.TEXT_TITLES['start_page']:
+            self.is_busy = True
+        elif actual_element.text == PD.TEXT_TITLES['search_page']:
+            self.is_busy = False
 
     def check_account_is_busy(self, driver: Firefox) -> object:
         """
         Проверка на то, занят ли аккаунт.
-        После успешного логина на сайт, нажимается кнопка "Найти".
-        В обычном случае нажатие на кнопку позволяет перейти к
-        поиску документов. Если аккаунт занят, сайт показывает поп-ап.
         """
 
-        URL = self.URL
-        MARK = 'login.'
-        wait = WebDriverWait(driver, 7)
-
-        # Общая информация.
+        wait = WebDriverWait(driver, 6)
         message = f'Аккаунт {self.login}. URL {driver.current_url}\n'
 
-        # Проверяем нахождение на целевом URL. Решаем вопрос.
-        if MARK not in driver.current_url:
-            if driver.current_url != PD.DEFAULT_URL:
-                try:
-                    driver.get(PD.DEFAULT_URL)
-                    sleep(1)
-                    driver.get(URL)
-                except Exception:
-                    logger.error(message, exc_info=True)
-                    return self
-            elif driver.current_url == PD.DEFAULT_URL:
-                try:
-                    driver.get(URL)
-                    sleep(2)
-                except Exception:
-                    logger.error(message, exc_info=True)
-                    return self
-            else:
-                logger.error(message, exc_info=True)
-                driver.get(PD.DEFAULT_URL)
-                driver.get(URL)
-                return self
-
-        # Логинимся.
-        self.login_to_site(driver, wait)
-
-        # Проверяем, подгружается ли сайт.
-        try:
-            wait.until(EC.url_changes(URL))
-        except Exception:
-            logger.error(message, exc_info=True)
-            driver.get(PD.DEFAULT_URL)
-            driver.get(URL)
-            return self
-
-        # Справляемся с приветственным поп-ап: ждем поп-ап,
-        # нажимаем на кнопку Esc, когда он появится.
-        welcome_button = By.CSS_SELECTOR, PD.BUTTONS['welcome_button']
-        try:
-            wait.until(EC.visibility_of_element_located(welcome_button))
-        except TimeoutException:
-            msg_wlc_er = message + 'Не подгрузилась кнопка приветствия'
-            logger.info(msg_wlc_er, exc_info=True)
-            if URL == driver.current_url:
-                self.login_to_site(driver, wait)
-        finally:
-            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-
-        # Нажимаем на кнопку "Быстрый поиск", пробуя, тем самым,
-        # пройти на экран, который недоступен, только если аккаунт занят.
-        # Нажатие на Esc уменьшает риск незапланированного поп-апа.
-        search_css = By.CSS_SELECTOR, PD.BUTTONS['search']
-        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-        try:
-            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-            wait.until(EC.element_to_be_clickable(search_css)).click()
-        except ElementClickInterceptedException:
+        # Проверяем нахождение на целевом URL.
+        if not 'login.' in driver.current_url:
             try:
-                ActionChains(driver).send_keys(Keys.ESCAPE).perform()
-                wait.until(EC.element_to_be_clickable(search_css)).click()
-                message_acc_profile = (
-                    message + 'Нажатию на "Поиск" что-то помешало. Решено.'
-                )
-                logger.info(message_acc_profile, exc_info=True)
+                driver.get(self.URL)
+                sleep(2)
             except Exception:
                 logger.error(message, exc_info=True)
-                driver.get(PD.DEFAULT_URL)
-                driver.get(URL)
                 return self
-        except Exception:
-            logger.error(message, exc_info=True)
-            driver.get(PD.DEFAULT_URL)
-            driver.get(URL)
-            return self
 
-        # Ищем элементы, отображающиеся на странице поиска либо на
-        # главной странице, когда нажатие на "Поиск" приводит
-        # к поп-апу - аккаунт занят. Вебдрайвер ждет,
-        # пока один из двух уникальных элементов не обнаружится.
-        start_page_element = EC.presence_of_element_located(
-            (By.CSS_SELECTOR, PD.BUTTONS['account_busy_leave'])
-        )
-        search_page_element = EC.presence_of_element_located(
-            (By.CSS_SELECTOR, PD.LABEL['search'])
-        )
-        actual_element = wait.until(
-            EC.any_of(start_page_element, search_page_element)
-        )
-
-        # Определяем текст уникальных элементов и сравниваем с референтным
-        # значением уникального элемента стартовой страницы и уникального
-        # элемента страницы поиска по первым трём буквам.
         try:
-            if actual_element.text[:2] == PD.TEXT_TITLES['start_page'][:2]:
-                self.is_busy = True
-            elif actual_element.text[:2] == PD.TEXT_TITLES['search_page'][:2]:
-                self.is_busy = False
-            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            self.login_to_site(wait)
+            self.push_search_button(driver, wait)
+            self.check_availability(wait)
         except Exception:
             logger.error(message, exc_info=True)
-            driver.get(PD.DEFAULT_URL)
-            driver.get(URL)
-            return self
 
-        # Тактика выхода одинаковая для любого статуса аккаунта:
-        # нажимаем на Esc, чтобы закрыть любые всплывшие окна,
-        # нажимаем на кнопку выхода и нажимаем на всплывшую
-        # кнопку подтверждения выхода.
-        try:
-            self.leave_account(driver, wait)
-        # Проводим выход дважды, т.к. часто появляется поп-ап.
-        except ElementClickInterceptedException:
-            logger.error(message, exc_info=True)
-            try:
-                self.leave_account(driver, wait)
-            except Exception:
-                logger.error(message, exc_info=True)
-                driver.get(PD.DEFAULT_URL)
-                driver.get(URL)
-                return self
-        except Exception:
-            logger.error(message, exc_info=True)
-            driver.get(PD.DEFAULT_URL)
-            driver.get(URL)
-            return self
-
+        self.leave_account(driver, wait, message)
         return self
 
     def __str__(self) -> str:
