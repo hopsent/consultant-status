@@ -4,8 +4,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from core.commander import Commander
-from core.drivers import DriversHandler
 from core.status import Status
+from core.combiner import Combiner
 from messanger.container import PreviuosMessageContainer
 from messanger.messages_data import MessagesData as MD
 
@@ -13,11 +13,10 @@ from messanger.messages_data import MessagesData as MD
 load_dotenv()
 
 
-# Создаем объект, управляющий загрузкой и поддержанием
-# веб-браузера.
-drivers_handler = DriversHandler()
-drivers_handler.create_drivers()
-drivers = drivers_handler.drivers
+# Создаем браузеры и аккаунты.
+drivers_regional = Combiner(True).combine_driver_with_account()
+drivers_general = Combiner(False).combine_driver_with_account()
+
 
 # Создаем объект для хранения времени предыдущего сообщения.
 previous_message = PreviuosMessageContainer()
@@ -69,11 +68,15 @@ def check_status_send_message(chat, context, regional):
     чей статус не выяснен по причине ошибок
     (то есть объект Account(status=None)).
     """
-    accounts = Commander(regional=regional).perform_not_busy(drivers)
     if regional:
         acc_type = MD.ACCOUNT_TYPES["regional"]
+        drivers = drivers_regional
     else:
         acc_type = MD.ACCOUNT_TYPES["general"]
+        drivers = drivers_general
+
+    accounts = Commander(regional=regional).perform_not_busy(drivers)
+
     if 'lost_data' in accounts.keys():
         context.bot.send_message(
             chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
@@ -105,10 +108,10 @@ def chat_validation(chat):
 def date_validation(date: datetime):
     """
     Запрещаем отправку команд со скоростью < одной команды
-    раз в 15 секунд. Время приведено в Unix timestamp.
+    раз в 12 секунд. Время приведено в Unix timestamp.
     """
     delta = date - previous_message.date
-    if delta.total_seconds() > 15:
+    if delta.total_seconds() > 12:
         previous_message.date = date
         return True
     return False

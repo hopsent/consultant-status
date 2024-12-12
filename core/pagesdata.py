@@ -2,8 +2,8 @@ class PagesData:
     """
     Определяет константы, используемые программой.
     В частности, определяет дефолтное значение URL,
-    наименования полей, а также наименования и CSS кнопок
-    и попапа, которые используются драйвером на сайте.
+    CSS полей, кнопок, тексты атрибутов элементов,
+    которые используются драйвером на сайте.
     """
 
     DEFAULT_URL: str = 'https://www.google.com'
@@ -15,14 +15,13 @@ class PagesData:
 
     BUTTONS: dict = {
         'sign_in': '#buttonLogin',
-        'search': '.x-page-components-main-toolbar__left-buttons > a:nth-child(2)',  # CSS +
-        'account_info_button': 'div.x-page-components-main-toolbar-top__button:nth-child(6)',
-        'change_personality': 'tr.x-menu__content-row:nth-child(6) > td:nth-child(2) > div:nth-child(1)',  # noqa
-        'welcome_button': 'body > div.popupFrameContainer > div > div > div > div > div > button',
-        'straight_exit': 'div.x-page-components-main-toolbar-top__button:nth-child(7)',
+        'search': '.x-page-components-main-toolbar__left-buttons > a:nth-child(2)',  # noqa
+        'straight_exit': 'div.x-page-components-main-toolbar-top__button:nth-child(7)',  # noqa
+        'no_longer_busy': '.x-toast__close',
     }
 
-    TEXT_TITLES: dict = {
+    TEXTS: dict = {
         'start_page': 'Учетная запись занята.',
         'search_page': 'Как искать:',
+        'data_title': 'Выйти из системы и освободить учетную запись.',
     }

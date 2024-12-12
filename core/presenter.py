@@ -18,6 +18,8 @@ class Presenter:
         С помощью интерфейса Drainer создаём словарь
         с объектами Account. Ключи словаря соответствуют
         статусу объектов Account на целевом сайте.
+
+        После экстрактирования статуса обнуляем его.
         """
 
         sort_account_to_status = {
@@ -30,7 +32,9 @@ class Presenter:
                 sort_account_to_status[ST.NO_DATA].append(str(item))
             elif item.is_busy is True:
                 sort_account_to_status[ST.BUSY].append(str(item))
+                item.is_busy = None
             elif item.is_busy is False:
                 sort_account_to_status[ST.NOT_BUSY].append(str(item))
+                item.is_busy = None
 
         return sort_account_to_status

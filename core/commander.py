@@ -1,9 +1,11 @@
 import logging
 from logging.handlers import RotatingFileHandler
+from typing import List
 
 from core.presenter import Presenter
 from core.processing import MultiCheckHandler
 from core.status import Status
+from core.emulating import Emulator
 
 
 formater = logging.Formatter(
@@ -41,10 +43,9 @@ class Commander:
     def __init__(self, regional: bool) -> None:
         self.regional = regional
 
-    def perform_not_busy(self, drivers):
+    def perform_not_busy(self, drivers: List[Emulator]):
 
-        handler = MultiCheckHandler(regional=self.regional)
-        q = handler.processing(drivers=drivers)
+        q = MultiCheckHandler().processing(windows=drivers)
         presentation = Presenter().composing(q)
         result = {
             Status.NOT_BUSY: ', '.join(presentation[Status.NOT_BUSY]),
@@ -57,7 +58,7 @@ class Commander:
         for key in presentation.keys():
             for i in presentation[key]:
                 accounts_checked.append(i)
-        if len(accounts_checked) != handler.amount:
+        if len(accounts_checked) != len(drivers):
             result['lost_data'] = ''
             logger.info('Аккаунты потеряны.')
 
