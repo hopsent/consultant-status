@@ -9,12 +9,12 @@
 - python-telegram-bot 13.7
 - предварительно подготовленный сервер
 # забираем докер-образ
-- sudo docker image pull hopsent/consultant-status:v4.06.2024
+- sudo docker image pull hopsent/consultant-status:v5.12.2024
 # запуск
 ```
 Запускаем контейнер докер (вместо example укажите ваш порт)
 ```
-- sudo docker run --name consultant-status -p example:example --shm-size 10g -it -d --privileged hopsent/consultant-status:v4.06.2024
+- sudo docker run --name consultant-status -p example:example --shm-size 10g -it -d --privileged hopsent/consultant-status:v5.12.2024
 ```
 Копируем предварительно подготовленный файл .env в докер-контейнер вот этой командой (вместо example укажите путь к файлу)
 ```
