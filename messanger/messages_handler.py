@@ -1,5 +1,6 @@
 from os import getenv
-from datetime import datetime
+from datetime import datetime, timezone
+from time import sleep
 
 from dotenv import load_dotenv
 
@@ -18,8 +19,9 @@ drivers_regional = Combiner(True).combine_driver_with_account()
 drivers_general = Combiner(False).combine_driver_with_account()
 
 
-# Создаем объект для хранения времени предыдущего сообщения.
+# Создаем объект для хранения времени предыдущего запроса и ответа.
 previous_message = PreviuosMessageContainer()
+previous_response = PreviuosMessageContainer(datetime.now(tz=timezone.utc))
 
 # Подгружаем информацию о референтных значениях чат-айди из .env,
 # используем их для валидации пользователей и контроля за исполнением кода.
@@ -84,16 +86,22 @@ def check_status_send_message(chat, context, regional):
                  f'{accounts[Status.NO_DATA]}, {accounts[Status.NOT_BUSY]}, '
                  f'{accounts[Status.BUSY]}'
         )
+
+    if len(accounts[Status.BUSY]) + len(accounts[Status.NOT_BUSY]) == 0:
+        msg = MD.COMMON["wipe"]
+    else:
+        msg = f'{MD.BEGINNINGS["normal"]}{acc_type}{busy_msg_chunk(accounts)}'
+
     # Если есть необработанные аккаунты.
     if accounts[Status.NO_DATA]:
         context.bot.send_message(
             chat_id=trouble_handle_id,  # Отправляем их в чат тех.поддержке.
             text=f'{MD.BEGINNINGS["trouble"]}{accounts[Status.NO_DATA]}'
         )
-    if len(accounts[Status.BUSY]) + len(accounts[Status.NOT_BUSY]) == 0:
-        msg = MD.COMMON["wipe"]
-    else:
-        msg = f'{MD.BEGINNINGS["normal"]}{acc_type}{busy_msg_chunk(accounts)}'
+        if msg != MD.COMMON["wipe"]:
+            msg += f'{MD.BEGINNINGS["trouble_ui"]}{accounts[Status.NO_DATA]}'
+
+    previous_response.date = datetime.now(tz=timezone.utc)
     return context.bot.send_message(chat_id=chat.id, text=msg)
 
 
@@ -111,7 +119,7 @@ def date_validation(date: datetime):
     раз в 12 секунд. Время приведено в Unix timestamp.
     """
     delta = date - previous_message.date
-    if delta.total_seconds() > 12:
+    if (delta.total_seconds() > 12) and (previous_message.date < previous_response.date):  # noqa.
         previous_message.date = date
         return True
     return False

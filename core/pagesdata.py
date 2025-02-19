@@ -21,7 +21,10 @@ class PagesData:
     }
 
     TEXTS: dict = {
-        'start_page': 'Учетная запись занята.',
-        'search_page': 'Как искать:',
         'data_title': 'Выйти из системы и освободить учетную запись.',
+    }
+
+    MISC: dict = {
+        'popup_busy': '.popupFrameContainer',
+        'popup_busy_class': 'popupFrameContainer',
     }

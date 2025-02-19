@@ -5,6 +5,7 @@ from time import sleep
 from typing import Literal, Tuple
 
 from dotenv import load_dotenv
+from selenium.common.exceptions import ElementClickInterceptedException
 from selenium.webdriver import Firefox
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -98,23 +99,37 @@ class Emulator:
         message = f'Аккаунт {self.account.login}. URL {c_url}\n'
 
         # Проверяем нахождение на целевом URL.
-        if ('consultant' not in c_url) or ('end&start' in c_url):
+        if ('consultant' not in c_url) or ('login' in c_url):
             try:
                 self.driver.get(self.URL)
                 self.login_to_site(wait)
                 sleep(6)
+            except ElementClickInterceptedException:
+                logger.error(message, exc_info=True)
+                self.driver.refresh()
+                self.login_to_site(wait)
             except Exception:
                 logger.error(message, exc_info=True)
 
         try:
             ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             search_css = By.CSS_SELECTOR, PD.BUTTONS['search']
-            wait.until(EC.element_to_be_clickable(search_css)).click()
+            if '515' or '514' in self.account.login:
+                try:
+                    wait.until(EC.element_to_be_clickable(search_css)).click()
+                except ElementClickInterceptedException:
+                    logger.error(message, exc_info=True)
+                    ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+                    wait.until(EC.element_to_be_clickable(search_css)).click()
+                except Exception:
+                    logger.error(message, exc_info=True)
+            else:
+                wait.until(EC.element_to_be_clickable(search_css)).click()
 
             ac_elem = wait.until(
                 EC.any_of(
                     EC.presence_of_element_located(
-                        (By.XPATH, f'//p[text()="{PD.TEXTS["start_page"]}"]')
+                        (By.CSS_SELECTOR, PD.MISC['popup_busy'])
                     ),
                     EC.presence_of_element_located(
                         (By.CSS_SELECTOR, PD.BUTTONS['straight_exit'])
@@ -122,7 +137,7 @@ class Emulator:
                 )
             )
 
-            if ac_elem.text == PD.TEXTS['start_page']:
+            if ac_elem.get_attribute('class') == PD.MISC['popup_busy_class']:
                 self.account.is_busy = True
                 ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
             elif ac_elem.get_attribute('data-title') == PD.TEXTS['data_title']:
