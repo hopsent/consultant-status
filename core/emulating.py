@@ -99,7 +99,7 @@ class Emulator:
         message = f'Аккаунт {self.account.login}. URL {c_url}\n'
 
         # Проверяем нахождение на целевом URL.
-        if ('consultant' not in c_url) or ('login' in c_url):
+        if ('consultant' not in c_url) or ('login' in c_url) or ('end&start' in c_url):
             try:
                 self.driver.get(self.URL)
                 self.login_to_site(wait)
